@@ -5,5 +5,6 @@
 
 Requisitos:
 
-Python 3.13.5
-Importar las librerías que aparecen en los Scripts
+1. Python 3.13.5
+2. Importar las librerías que aparecen en los Scripts
+
