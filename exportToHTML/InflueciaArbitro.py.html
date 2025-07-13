@@ -1,0 +1,118 @@
+<html>
+<head>
+<title>InflueciaArbitro.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #7a7e85;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+InflueciaArbitro.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">matplotlib</span><span class="s2">.</span><span class="s1">pyplot </span><span class="s0">as </span><span class="s1">plt</span>
+<span class="s0">import </span><span class="s1">pandas </span><span class="s0">as </span><span class="s1">pd</span>
+<span class="s0">from </span><span class="s1">statsmodels</span><span class="s2">.</span><span class="s1">stats</span><span class="s2">.</span><span class="s1">proportion </span><span class="s0">import </span><span class="s1">proportions_ztest</span>
+<span class="s0">import </span><span class="s1">statsmodels</span><span class="s2">.</span><span class="s1">formula</span><span class="s2">.</span><span class="s1">api </span><span class="s0">as </span><span class="s1">smf</span>
+<span class="s0">import </span><span class="s1">seaborn </span><span class="s0">as </span><span class="s1">sns</span>
+
+
+<span class="s3"># 1. Leer CSV</span>
+<span class="s1">df </span><span class="s2">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">read_csv</span><span class="s2">(</span><span class="s4">'C:/EDA/matches.csv'</span><span class="s2">)</span>
+<span class="s3"># Definir lista de columnas</span>
+<span class="s1">cols </span><span class="s2">= [</span><span class="s4">'Date'</span><span class="s2">, </span><span class="s4">'Team'</span><span class="s2">, </span><span class="s4">'Opponent'</span><span class="s2">, </span><span class="s4">'Venue'</span><span class="s2">, </span><span class="s4">'Result'</span><span class="s2">, </span><span class="s4">'GF'</span><span class="s2">, </span><span class="s4">'GA'</span><span class="s2">, </span><span class="s4">'xG'</span><span class="s2">, </span><span class="s4">'xGA'</span><span class="s2">, </span><span class="s4">'Attendance'</span><span class="s2">, </span><span class="s4">'Referee'</span><span class="s2">, </span><span class="s4">'Formation'</span><span class="s2">, </span><span class="s4">'Round'</span><span class="s2">]</span>
+
+<span class="s3"># Crear un nuevo DataFrame filtrado</span>
+<span class="s1">df_sel </span><span class="s2">= </span><span class="s1">df</span><span class="s2">[</span><span class="s1">cols</span><span class="s2">].</span><span class="s1">copy</span><span class="s2">()</span>
+
+<span class="s3"># Copiar DataFrame</span>
+<span class="s1">df2 </span><span class="s2">= </span><span class="s1">df_sel</span><span class="s2">.</span><span class="s1">copy</span><span class="s2">()</span>
+<span class="s1">df2</span><span class="s2">[</span><span class="s4">'home_win'</span><span class="s2">] = (</span><span class="s1">df2</span><span class="s2">[</span><span class="s4">'Result'</span><span class="s2">] == </span><span class="s4">'W'</span><span class="s2">).</span><span class="s1">astype</span><span class="s2">(</span><span class="s1">int</span><span class="s2">)</span>
+
+<span class="s3"># Agrupar por árbitro</span>
+<span class="s1">ref_stats </span><span class="s2">= (</span>
+    <span class="s1">df2</span>
+      <span class="s2">.</span><span class="s1">groupby</span><span class="s2">(</span><span class="s4">'Referee'</span><span class="s2">)[</span><span class="s4">'home_win'</span><span class="s2">]</span>
+      <span class="s2">.</span><span class="s1">agg</span><span class="s2">([</span><span class="s4">'mean'</span><span class="s2">,</span><span class="s4">'count'</span><span class="s2">])</span>
+      <span class="s2">.</span><span class="s1">rename</span><span class="s2">(</span><span class="s1">columns</span><span class="s2">={</span><span class="s4">'mean'</span><span class="s2">:</span><span class="s4">'home_win_pct'</span><span class="s2">,</span><span class="s4">'count'</span><span class="s2">:</span><span class="s4">'n_matches'</span><span class="s2">})</span>
+      <span class="s2">.</span><span class="s1">reset_index</span><span class="s2">()</span>
+<span class="s2">)</span>
+
+<span class="s3"># Convertir a % y filtrar árbitros con al menos 20 partidos</span>
+<span class="s1">ref_stats</span><span class="s2">[</span><span class="s4">'home_win_pct'</span><span class="s2">] = </span><span class="s1">ref_stats</span><span class="s2">[</span><span class="s4">'home_win_pct'</span><span class="s2">] * </span><span class="s5">100</span>
+<span class="s1">ref_stats </span><span class="s2">= </span><span class="s1">ref_stats</span><span class="s2">[</span><span class="s1">ref_stats</span><span class="s2">[</span><span class="s4">'n_matches'</span><span class="s2">] &gt;= </span><span class="s5">20</span><span class="s2">]  </span><span class="s3"># umbral arbitral</span>
+
+<span class="s3"># Ordenar de mayor a menor</span>
+<span class="s1">ref_stats </span><span class="s2">= </span><span class="s1">ref_stats</span><span class="s2">.</span><span class="s1">sort_values</span><span class="s2">(</span><span class="s4">'home_win_pct'</span><span class="s2">, </span><span class="s1">ascending</span><span class="s2">=</span><span class="s0">False</span><span class="s2">)</span>
+<span class="s1">print</span><span class="s2">(</span><span class="s1">ref_stats</span><span class="s2">.</span><span class="s1">head</span><span class="s2">(</span><span class="s5">10</span><span class="s2">))</span>
+
+<span class="s3">#Test de proporciones (binomial). Comprobamos si el porcentaje de cada árbitro difiere del % global de victorias locales.</span>
+<span class="s1">global_p </span><span class="s2">= </span><span class="s1">df2</span><span class="s2">[</span><span class="s4">'home_win'</span><span class="s2">].</span><span class="s1">mean</span><span class="s2">()  </span><span class="s3"># proporción global</span>
+
+<span class="s1">significant_refs </span><span class="s2">= []</span>
+<span class="s0">for </span><span class="s1">_</span><span class="s2">, </span><span class="s1">row </span><span class="s0">in </span><span class="s1">ref_stats</span><span class="s2">.</span><span class="s1">iterrows</span><span class="s2">():</span>
+    <span class="s1">count </span><span class="s2">= </span><span class="s1">int</span><span class="s2">(</span><span class="s1">row</span><span class="s2">[</span><span class="s4">'home_win_pct'</span><span class="s2">] * </span><span class="s1">row</span><span class="s2">[</span><span class="s4">'n_matches'</span><span class="s2">] / </span><span class="s5">100</span><span class="s2">)</span>
+    <span class="s1">nobs  </span><span class="s2">= </span><span class="s1">int</span><span class="s2">(</span><span class="s1">row</span><span class="s2">[</span><span class="s4">'n_matches'</span><span class="s2">])</span>
+    <span class="s1">stat</span><span class="s2">, </span><span class="s1">pval </span><span class="s2">= </span><span class="s1">proportions_ztest</span><span class="s2">(</span><span class="s1">count</span><span class="s2">, </span><span class="s1">nobs</span><span class="s2">, </span><span class="s1">value</span><span class="s2">=</span><span class="s1">global_p</span><span class="s2">)</span>
+    <span class="s0">if </span><span class="s1">pval </span><span class="s2">&lt; </span><span class="s5">0.05</span><span class="s2">:</span>
+        <span class="s1">significant_refs</span><span class="s2">.</span><span class="s1">append</span><span class="s2">({</span>
+            <span class="s4">'Referee'</span><span class="s2">: </span><span class="s1">row</span><span class="s2">[</span><span class="s4">'Referee'</span><span class="s2">],</span>
+            <span class="s4">'home_win_pct'</span><span class="s2">: </span><span class="s1">row</span><span class="s2">[</span><span class="s4">'home_win_pct'</span><span class="s2">],</span>
+            <span class="s4">'n_matches'</span><span class="s2">: </span><span class="s1">nobs</span><span class="s2">,</span>
+            <span class="s4">'p_value'</span><span class="s2">: </span><span class="s1">pval</span>
+        <span class="s2">})</span>
+
+<span class="s0">if not </span><span class="s1">significant_refs</span><span class="s2">:</span>
+    <span class="s1">print</span><span class="s2">(</span><span class="s4">&quot;No hay árbitros con tasa de victorias local significativamente distinta de la global (p&lt;0.05).&quot;</span><span class="s2">)</span>
+<span class="s0">else</span><span class="s2">:</span>
+    <span class="s1">sig_df </span><span class="s2">= (</span>
+        <span class="s1">pd</span><span class="s2">.</span><span class="s1">DataFrame</span><span class="s2">(</span><span class="s1">significant_refs</span><span class="s2">)</span>
+          <span class="s2">.</span><span class="s1">sort_values</span><span class="s2">(</span><span class="s4">'home_win_pct'</span><span class="s2">, </span><span class="s1">ascending</span><span class="s2">=</span><span class="s0">False</span><span class="s2">)</span>
+          <span class="s2">.</span><span class="s1">reset_index</span><span class="s2">(</span><span class="s1">drop</span><span class="s2">=</span><span class="s0">True</span><span class="s2">)</span>
+    <span class="s2">)</span>
+    <span class="s1">print</span><span class="s2">(</span><span class="s4">&quot;</span><span class="s0">\n</span><span class="s4">Árbitros con % local significativamente distinto:</span><span class="s0">\n</span><span class="s4">&quot;</span><span class="s2">, </span><span class="s1">sig_df</span><span class="s2">)</span>
+
+<span class="s3">#Modelo logístico multinivel. Para aislar el efecto del árbitro controlando asistencia, rivalidad y xG. Los coeficientes de C(Referee)[T.XXX] medirán el cambio en log-odds de victoria local asociado a cada árbitro, tras ajustar por variables de partido.</span>
+<span class="s3"># Crear indicador Top6 si no existe</span>
+<span class="s1">top6 </span><span class="s2">= [</span><span class="s4">'Arsenal'</span><span class="s2">,</span><span class="s4">'Chelsea'</span><span class="s2">,</span><span class="s4">'Liverpool'</span><span class="s2">,</span><span class="s4">'ManCity'</span><span class="s2">,</span><span class="s4">'ManUtd'</span><span class="s2">,</span><span class="s4">'Tottenham'</span><span class="s2">]</span>
+<span class="s1">df2</span><span class="s2">[</span><span class="s4">'top6_opp'</span><span class="s2">] = </span><span class="s1">df2</span><span class="s2">[</span><span class="s4">'Opponent'</span><span class="s2">].</span><span class="s1">isin</span><span class="s2">(</span><span class="s1">top6</span><span class="s2">).</span><span class="s1">astype</span><span class="s2">(</span><span class="s1">int</span><span class="s2">)</span>
+
+<span class="s3"># Ajustar el modelo logístico con árbitro como covariable categórica</span>
+<span class="s1">model </span><span class="s2">= </span><span class="s1">smf</span><span class="s2">.</span><span class="s1">logit</span><span class="s2">(</span>
+    <span class="s4">'home_win ~ Attendance + xG + xGA + top6_opp + C(Referee)'</span><span class="s2">,</span>
+    <span class="s1">data</span><span class="s2">=</span><span class="s1">df2</span>
+<span class="s2">).</span><span class="s1">fit</span><span class="s2">(</span><span class="s1">disp</span><span class="s2">=</span><span class="s0">False</span><span class="s2">)</span>
+
+<span class="s3"># Extraer coeficientes y p-values para las dummies de árbitro</span>
+<span class="s1">ref_coefs </span><span class="s2">= </span><span class="s1">model</span><span class="s2">.</span><span class="s1">params</span><span class="s2">.</span><span class="s1">filter</span><span class="s2">(</span><span class="s1">like</span><span class="s2">=</span><span class="s4">'Referee'</span><span class="s2">)</span>
+<span class="s1">ref_pvals  </span><span class="s2">= </span><span class="s1">model</span><span class="s2">.</span><span class="s1">pvalues</span><span class="s2">.</span><span class="s1">filter</span><span class="s2">(</span><span class="s1">like</span><span class="s2">=</span><span class="s4">'Referee'</span><span class="s2">)</span>
+
+<span class="s3"># Construir DataFrame de resultados arbitrales</span>
+<span class="s1">df_referees </span><span class="s2">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">DataFrame</span><span class="s2">({</span>
+    <span class="s4">'coef'</span><span class="s2">:    </span><span class="s1">ref_coefs</span><span class="s2">,</span>
+    <span class="s4">'p_value'</span><span class="s2">: </span><span class="s1">ref_pvals</span>
+<span class="s2">}).</span><span class="s1">sort_values</span><span class="s2">(</span><span class="s4">'coef'</span><span class="s2">, </span><span class="s1">ascending</span><span class="s2">=</span><span class="s0">False</span><span class="s2">)</span>
+
+<span class="s1">print</span><span class="s2">(</span><span class="s4">&quot;</span><span class="s0">\n</span><span class="s4">Sesgo arbitral (cambio en log-odds de victoria local):</span><span class="s0">\n</span><span class="s4">&quot;</span><span class="s2">)</span>
+<span class="s1">print</span><span class="s2">(</span><span class="s1">df_referees</span><span class="s2">)</span>
+
+<span class="s3">#resultados</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">figure</span><span class="s2">(</span><span class="s1">figsize</span><span class="s2">=(</span><span class="s5">10</span><span class="s2">,</span><span class="s5">6</span><span class="s2">))</span>
+<span class="s1">sns</span><span class="s2">.</span><span class="s1">histplot</span><span class="s2">(</span><span class="s1">ref_stats</span><span class="s2">[</span><span class="s4">'home_win_pct'</span><span class="s2">], </span><span class="s1">bins</span><span class="s2">=</span><span class="s5">20</span><span class="s2">, </span><span class="s1">kde</span><span class="s2">=</span><span class="s0">True</span><span class="s2">, </span><span class="s1">color</span><span class="s2">=</span><span class="s4">'skyblue'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">axvline</span><span class="s2">(</span><span class="s1">global_p</span><span class="s2">*</span><span class="s5">100</span><span class="s2">, </span><span class="s1">color</span><span class="s2">=</span><span class="s4">'red'</span><span class="s2">, </span><span class="s1">linestyle</span><span class="s2">=</span><span class="s4">'--'</span><span class="s2">,</span>
+            <span class="s1">label</span><span class="s2">=</span><span class="s4">f'Global </span><span class="s0">{</span><span class="s1">global_p</span><span class="s2">*</span><span class="s5">100</span><span class="s0">:</span><span class="s4">.1f</span><span class="s0">}</span><span class="s4">%'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">title</span><span class="s2">(</span><span class="s4">'% Victorias Locales por Árbitro'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">xlabel</span><span class="s2">(</span><span class="s4">'% Victorias Locales'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">ylabel</span><span class="s2">(</span><span class="s4">'Frecuencia de Árbitros'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">legend</span><span class="s2">()</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">tight_layout</span><span class="s2">()</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">show</span><span class="s2">()</span></pre>
+</body>
+</html>

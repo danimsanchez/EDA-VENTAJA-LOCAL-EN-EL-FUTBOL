@@ -1,0 +1,81 @@
+<html>
+<head>
+<title>PartidosFinalesVictorias.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #7a7e85;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+PartidosFinalesVictorias.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">matplotlib</span><span class="s2">.</span><span class="s1">pyplot </span><span class="s0">as </span><span class="s1">plt</span>
+<span class="s0">import </span><span class="s1">pandas </span><span class="s0">as </span><span class="s1">pd</span>
+<span class="s0">import </span><span class="s1">numpy </span><span class="s0">as </span><span class="s1">np</span>
+<span class="s0">from </span><span class="s1">statsmodels</span><span class="s2">.</span><span class="s1">stats</span><span class="s2">.</span><span class="s1">proportion </span><span class="s0">import </span><span class="s1">proportions_ztest</span>
+<span class="s0">import </span><span class="s1">seaborn </span><span class="s0">as </span><span class="s1">sns</span>
+
+<span class="s3"># 1. Leer CSV</span>
+<span class="s1">df </span><span class="s2">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">read_csv</span><span class="s2">(</span><span class="s4">'C:/EDA/matches.csv'</span><span class="s2">)</span>
+<span class="s3"># Definir lista de columnas</span>
+<span class="s1">cols </span><span class="s2">= [</span><span class="s4">'Date'</span><span class="s2">, </span><span class="s4">'Team'</span><span class="s2">, </span><span class="s4">'Opponent'</span><span class="s2">, </span><span class="s4">'Venue'</span><span class="s2">, </span><span class="s4">'Result'</span><span class="s2">, </span><span class="s4">'GF'</span><span class="s2">, </span><span class="s4">'GA'</span><span class="s2">, </span><span class="s4">'xG'</span><span class="s2">, </span><span class="s4">'xGA'</span><span class="s2">, </span><span class="s4">'Attendance'</span><span class="s2">, </span><span class="s4">'Referee'</span><span class="s2">, </span><span class="s4">'Formation'</span><span class="s2">, </span><span class="s4">'Round'</span><span class="s2">]</span>
+
+<span class="s3"># Crear un nuevo DataFrame filtrado</span>
+<span class="s1">df_sel </span><span class="s2">= </span><span class="s1">df</span><span class="s2">[</span><span class="s1">cols</span><span class="s2">].</span><span class="s1">copy</span><span class="s2">()</span>
+
+<span class="s3"># Copiar DataFrame</span>
+<span class="s1">df2 </span><span class="s2">= </span><span class="s1">df_sel</span><span class="s2">.</span><span class="s1">copy</span><span class="s2">()</span>
+
+<span class="s3"># Extraer número de jornada (Round = 'Matchweek X')</span>
+<span class="s1">df2</span><span class="s2">[</span><span class="s4">'Matchweek'</span><span class="s2">] = </span><span class="s1">df2</span><span class="s2">[</span><span class="s4">'Round'</span><span class="s2">].</span><span class="s1">str</span><span class="s2">.</span><span class="s1">extract</span><span class="s2">(</span><span class="s4">'(\d+)'</span><span class="s2">).</span><span class="s1">astype</span><span class="s2">(</span><span class="s1">int</span><span class="s2">)</span>
+
+<span class="s3"># Número máximo de jornada</span>
+<span class="s1">max_md </span><span class="s2">= </span><span class="s1">df2</span><span class="s2">[</span><span class="s4">'Matchweek'</span><span class="s2">].</span><span class="s1">max</span><span class="s2">()</span>
+
+<span class="s3"># Definir últimas 6 jornadas</span>
+<span class="s1">df2</span><span class="s2">[</span><span class="s4">'LateSeason'</span><span class="s2">] = </span><span class="s1">np</span><span class="s2">.</span><span class="s1">where</span><span class="s2">(</span><span class="s1">df2</span><span class="s2">[</span><span class="s4">'Matchweek'</span><span class="s2">] &gt; </span><span class="s1">max_md </span><span class="s2">- </span><span class="s5">6</span><span class="s2">, </span><span class="s5">1</span><span class="s2">, </span><span class="s5">0</span><span class="s2">)</span>
+
+<span class="s3"># Filtrar solo partidos en casa</span>
+<span class="s1">df_home2 </span><span class="s2">= </span><span class="s1">df2</span><span class="s2">[</span><span class="s1">df2</span><span class="s2">[</span><span class="s4">'Venue'</span><span class="s2">]==</span><span class="s4">'Home'</span><span class="s2">].</span><span class="s1">copy</span><span class="s2">()</span>
+<span class="s1">df_home2</span><span class="s2">[</span><span class="s4">'home_win'</span><span class="s2">] = (</span><span class="s1">df_home2</span><span class="s2">[</span><span class="s4">'Result'</span><span class="s2">]==</span><span class="s4">'W'</span><span class="s2">).</span><span class="s1">astype</span><span class="s2">(</span><span class="s1">int</span><span class="s2">)</span>
+
+<span class="s3"># Tasa de victorias en casa por fase</span>
+<span class="s1">win_rates </span><span class="s2">= (</span>
+    <span class="s1">df_home2</span>
+      <span class="s2">.</span><span class="s1">groupby</span><span class="s2">(</span><span class="s4">'LateSeason'</span><span class="s2">)[</span><span class="s4">'home_win'</span><span class="s2">]</span>
+      <span class="s2">.</span><span class="s1">mean</span><span class="s2">()</span>
+      <span class="s2">.</span><span class="s1">mul</span><span class="s2">(</span><span class="s5">100</span><span class="s2">)</span>
+      <span class="s2">.</span><span class="s1">reset_index</span><span class="s2">()</span>
+      <span class="s2">.</span><span class="s1">replace</span><span class="s2">({</span><span class="s5">0</span><span class="s2">:</span><span class="s4">'Early'</span><span class="s2">, </span><span class="s5">1</span><span class="s2">:</span><span class="s4">'Late'</span><span class="s2">})</span>
+      <span class="s2">.</span><span class="s1">rename</span><span class="s2">(</span><span class="s1">columns</span><span class="s2">={</span><span class="s4">'LateSeason'</span><span class="s2">:</span><span class="s4">'Phase'</span><span class="s2">,</span><span class="s4">'home_win'</span><span class="s2">:</span><span class="s4">'WinPct'</span><span class="s2">})</span>
+<span class="s2">)</span>
+
+<span class="s1">print</span><span class="s2">(</span><span class="s1">win_rates</span><span class="s2">)</span>
+
+<span class="s3"># Conteos y totales</span>
+<span class="s1">counts </span><span class="s2">= </span><span class="s1">df_home2</span><span class="s2">.</span><span class="s1">groupby</span><span class="s2">(</span><span class="s4">'LateSeason'</span><span class="s2">)[</span><span class="s4">'home_win'</span><span class="s2">].</span><span class="s1">sum</span><span class="s2">().</span><span class="s1">values</span>
+<span class="s1">nobs   </span><span class="s2">= </span><span class="s1">df_home2</span><span class="s2">.</span><span class="s1">groupby</span><span class="s2">(</span><span class="s4">'LateSeason'</span><span class="s2">)[</span><span class="s4">'home_win'</span><span class="s2">].</span><span class="s1">count</span><span class="s2">().</span><span class="s1">values</span>
+
+<span class="s3">#Test de proporciones, Un p-value &lt; 0.05 confirmaría que la diferencia Early vs. Late es significativa.</span>
+<span class="s1">stat</span><span class="s2">, </span><span class="s1">pval </span><span class="s2">= </span><span class="s1">proportions_ztest</span><span class="s2">(</span><span class="s1">counts</span><span class="s2">, </span><span class="s1">nobs</span><span class="s2">)</span>
+<span class="s1">print</span><span class="s2">(</span><span class="s4">f&quot;z-stat: </span><span class="s0">{</span><span class="s1">stat</span><span class="s0">:</span><span class="s4">.2f</span><span class="s0">}</span><span class="s4">, p-value: </span><span class="s0">{</span><span class="s1">pval</span><span class="s0">:</span><span class="s4">.4f</span><span class="s0">}</span><span class="s4">&quot;</span><span class="s2">)</span>
+
+
+<span class="s3"># resultados</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">figure</span><span class="s2">(</span><span class="s1">figsize</span><span class="s2">=(</span><span class="s5">6</span><span class="s2">,</span><span class="s5">4</span><span class="s2">))</span>
+<span class="s1">sns</span><span class="s2">.</span><span class="s1">barplot</span><span class="s2">(</span><span class="s1">x</span><span class="s2">=</span><span class="s4">'Phase'</span><span class="s2">, </span><span class="s1">y</span><span class="s2">=</span><span class="s4">'WinPct'</span><span class="s2">, </span><span class="s1">data</span><span class="s2">=</span><span class="s1">win_rates</span><span class="s2">, </span><span class="s1">palette</span><span class="s2">=[</span><span class="s4">'skyblue'</span><span class="s2">,</span><span class="s4">'salmon'</span><span class="s2">])</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">title</span><span class="s2">(</span><span class="s4">'Victorias en Casa: Early vs Late Season'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">ylabel</span><span class="s2">(</span><span class="s4">'% victorias locales'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">xlabel</span><span class="s2">(</span><span class="s4">''</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">tight_layout</span><span class="s2">()</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">show</span><span class="s2">()</span></pre>
+</body>
+</html>

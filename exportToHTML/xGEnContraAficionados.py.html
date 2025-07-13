@@ -1,0 +1,68 @@
+<html>
+<head>
+<title>xGEnContraAficionados.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #7a7e85;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+xGEnContraAficionados.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">matplotlib</span><span class="s2">.</span><span class="s1">pyplot </span><span class="s0">as </span><span class="s1">plt</span>
+<span class="s0">import </span><span class="s1">seaborn </span><span class="s0">as </span><span class="s1">sns</span>
+<span class="s0">import </span><span class="s1">pandas </span><span class="s0">as </span><span class="s1">pd</span>
+
+<span class="s3"># 1. Leer CSV</span>
+<span class="s1">df </span><span class="s2">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">read_csv</span><span class="s2">(</span><span class="s4">'C:/EDA/matches.csv'</span><span class="s2">)</span>
+<span class="s3"># Definir lista de columnas</span>
+<span class="s1">cols </span><span class="s2">= [</span><span class="s4">'Date'</span><span class="s2">, </span><span class="s4">'Team'</span><span class="s2">, </span><span class="s4">'Opponent'</span><span class="s2">, </span><span class="s4">'Venue'</span><span class="s2">, </span><span class="s4">'Result'</span><span class="s2">, </span><span class="s4">'GF'</span><span class="s2">, </span><span class="s4">'GA'</span><span class="s2">, </span><span class="s4">'xG'</span><span class="s2">, </span><span class="s4">'xGA'</span><span class="s2">, </span><span class="s4">'Attendance'</span><span class="s2">, </span><span class="s4">'Referee'</span><span class="s2">, </span><span class="s4">'Formation'</span><span class="s2">, </span><span class="s4">'Round'</span><span class="s2">]</span>
+
+<span class="s3"># Crear un nuevo DataFrame filtrado</span>
+<span class="s1">df_sel </span><span class="s2">= </span><span class="s1">df</span><span class="s2">[</span><span class="s1">cols</span><span class="s2">].</span><span class="s1">copy</span><span class="s2">()</span>
+
+<span class="s3"># Filtrar solo partidos en casa</span>
+<span class="s1">df_home </span><span class="s2">= </span><span class="s1">df_sel</span><span class="s2">[</span><span class="s1">df_sel</span><span class="s2">[</span><span class="s4">'Venue'</span><span class="s2">]==</span><span class="s4">'Home'</span><span class="s2">].</span><span class="s1">copy</span><span class="s2">()</span>
+
+<span class="s3"># Correlación Attendance vs xGA</span>
+<span class="s1">corr </span><span class="s2">= </span><span class="s1">df_home</span><span class="s2">[</span><span class="s4">'Attendance'</span><span class="s2">].</span><span class="s1">corr</span><span class="s2">(</span><span class="s1">df_home</span><span class="s2">[</span><span class="s4">'xGA'</span><span class="s2">])</span>
+<span class="s1">print</span><span class="s2">(</span><span class="s4">f&quot;Correlación Attendance vs xGA: </span><span class="s0">{</span><span class="s1">corr</span><span class="s0">:</span><span class="s4">.3f</span><span class="s0">}</span><span class="s4">&quot;</span><span class="s2">)</span>
+
+<span class="s3"># Crear cuantiles basados en Attendance</span>
+<span class="s1">df_home</span><span class="s2">[</span><span class="s4">'att_q'</span><span class="s2">] = </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">qcut</span><span class="s2">(</span><span class="s1">df_home</span><span class="s2">[</span><span class="s4">'Attendance'</span><span class="s2">], </span><span class="s5">5</span><span class="s2">)</span>
+
+<span class="s3"># Calcular xGA medio por cuantil</span>
+<span class="s1">xga_by_q </span><span class="s2">= (</span>
+    <span class="s1">df_home</span>
+      <span class="s2">.</span><span class="s1">groupby</span><span class="s2">(</span><span class="s4">'att_q'</span><span class="s2">)[</span><span class="s4">'xGA'</span><span class="s2">]</span>
+      <span class="s2">.</span><span class="s1">mean</span><span class="s2">()</span>
+      <span class="s2">.</span><span class="s1">reset_index</span><span class="s2">(</span><span class="s1">name</span><span class="s2">=</span><span class="s4">'mean_xGA'</span><span class="s2">)</span>
+<span class="s2">)</span>
+
+<span class="s1">print</span><span class="s2">(</span><span class="s1">xga_by_q</span><span class="s2">)</span>
+
+
+<span class="s3">#La pendiente de la línea indicará visualmente si existe efecto reductor de xGA a medida que crece la asistencia.</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">figure</span><span class="s2">(</span><span class="s1">figsize</span><span class="s2">=(</span><span class="s5">8</span><span class="s2">,</span><span class="s5">5</span><span class="s2">))</span>
+<span class="s1">sns</span><span class="s2">.</span><span class="s1">regplot</span><span class="s2">(</span>
+    <span class="s1">x</span><span class="s2">=</span><span class="s4">'Attendance'</span><span class="s2">,</span>
+    <span class="s1">y</span><span class="s2">=</span><span class="s4">'xGA'</span><span class="s2">,</span>
+    <span class="s1">data</span><span class="s2">=</span><span class="s1">df_home</span><span class="s2">,</span>
+    <span class="s1">scatter_kws</span><span class="s2">={</span><span class="s4">'alpha'</span><span class="s2">:</span><span class="s5">0.3</span><span class="s2">, </span><span class="s4">'s'</span><span class="s2">:</span><span class="s5">20</span><span class="s2">},</span>
+    <span class="s1">line_kws</span><span class="s2">={</span><span class="s4">'color'</span><span class="s2">:</span><span class="s4">'red'</span><span class="s2">}</span>
+<span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">title</span><span class="s2">(</span><span class="s4">'xGA vs Asistencia (partidos en casa)'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">xlabel</span><span class="s2">(</span><span class="s4">'Asistencia'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">ylabel</span><span class="s2">(</span><span class="s4">'xGA concedido'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">tight_layout</span><span class="s2">()</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">show</span><span class="s2">()</span></pre>
+</body>
+</html>

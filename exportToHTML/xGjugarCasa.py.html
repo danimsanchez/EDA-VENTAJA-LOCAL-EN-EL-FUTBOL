@@ -1,0 +1,70 @@
+<html>
+<head>
+<title>xGjugarCasa.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #7a7e85;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+xGjugarCasa.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">pandas </span><span class="s0">as </span><span class="s1">pd</span>
+<span class="s0">from </span><span class="s1">scipy</span><span class="s2">.</span><span class="s1">stats </span><span class="s0">import </span><span class="s1">ttest_ind</span>
+<span class="s0">import </span><span class="s1">seaborn </span><span class="s0">as </span><span class="s1">sns</span>
+<span class="s0">import </span><span class="s1">matplotlib</span><span class="s2">.</span><span class="s1">pyplot </span><span class="s0">as </span><span class="s1">plt</span>
+
+<span class="s3"># 1. Leer CSV</span>
+<span class="s1">df </span><span class="s2">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">read_csv</span><span class="s2">(</span><span class="s4">'C:/EDA/matches.csv'</span><span class="s2">)</span>
+<span class="s3"># Definir lista de columnas</span>
+<span class="s1">cols </span><span class="s2">= [</span><span class="s4">'Date'</span><span class="s2">, </span><span class="s4">'Team'</span><span class="s2">, </span><span class="s4">'Opponent'</span><span class="s2">, </span><span class="s4">'Venue'</span><span class="s2">, </span><span class="s4">'Result'</span><span class="s2">, </span><span class="s4">'GF'</span><span class="s2">, </span><span class="s4">'GA'</span><span class="s2">, </span><span class="s4">'xG'</span><span class="s2">, </span><span class="s4">'xGA'</span><span class="s2">, </span><span class="s4">'Attendance'</span><span class="s2">, </span><span class="s4">'Referee'</span><span class="s2">, </span><span class="s4">'Formation'</span><span class="s2">, </span><span class="s4">'Round'</span><span class="s2">]</span>
+
+<span class="s3"># Crear un nuevo DataFrame filtrado</span>
+<span class="s1">df_sel </span><span class="s2">= </span><span class="s1">df</span><span class="s2">[</span><span class="s1">cols</span><span class="s2">].</span><span class="s1">copy</span><span class="s2">()</span>
+
+<span class="s3"># Separar xG por local y visitante</span>
+<span class="s1">home_xg </span><span class="s2">= </span><span class="s1">df_sel</span><span class="s2">[</span><span class="s1">df_sel</span><span class="s2">[</span><span class="s4">'Venue'</span><span class="s2">]==</span><span class="s4">'Home'</span><span class="s2">][</span><span class="s4">'xG'</span><span class="s2">]</span>
+<span class="s1">away_xg </span><span class="s2">= </span><span class="s1">df_sel</span><span class="s2">[</span><span class="s1">df_sel</span><span class="s2">[</span><span class="s4">'Venue'</span><span class="s2">]==</span><span class="s4">'Away'</span><span class="s2">][</span><span class="s4">'xG'</span><span class="s2">]</span>
+
+<span class="s3"># Calcular medias</span>
+<span class="s1">mean_home </span><span class="s2">= </span><span class="s1">home_xg</span><span class="s2">.</span><span class="s1">mean</span><span class="s2">()</span>
+<span class="s1">mean_away </span><span class="s2">= </span><span class="s1">away_xg</span><span class="s2">.</span><span class="s1">mean</span><span class="s2">()</span>
+<span class="s1">print</span><span class="s2">(</span><span class="s4">f&quot;xG medio en casa:  </span><span class="s0">{</span><span class="s1">mean_home</span><span class="s0">:</span><span class="s4">.2f</span><span class="s0">}</span><span class="s4">&quot;</span><span class="s2">)</span>
+<span class="s1">print</span><span class="s2">(</span><span class="s4">f&quot;xG medio fuera:  </span><span class="s0">{</span><span class="s1">mean_away</span><span class="s0">:</span><span class="s4">.2f</span><span class="s0">}</span><span class="s4">&quot;</span><span class="s2">)</span>
+
+<span class="s3">#Test de diferencia (t-test) Si p-value &lt; 0.05 entonnces la diferencia en xG entre casa y fuera es significativa.</span>
+<span class="s1">stat</span><span class="s2">, </span><span class="s1">pval </span><span class="s2">= </span><span class="s1">ttest_ind</span><span class="s2">(</span><span class="s1">home_xg</span><span class="s2">, </span><span class="s1">away_xg</span><span class="s2">, </span><span class="s1">equal_var</span><span class="s2">=</span><span class="s0">False</span><span class="s2">)</span>
+<span class="s1">print</span><span class="s2">(</span><span class="s4">f&quot;t-stat: </span><span class="s0">{</span><span class="s1">stat</span><span class="s0">:</span><span class="s4">.2f</span><span class="s0">}</span><span class="s4">, p-value: </span><span class="s0">{</span><span class="s1">pval</span><span class="s0">:</span><span class="s4">.4f</span><span class="s0">}</span><span class="s4">&quot;</span><span class="s2">)</span>
+
+<span class="s3"># Media por Venue</span>
+<span class="s1">xg_means </span><span class="s2">= </span><span class="s1">df</span><span class="s2">.</span><span class="s1">groupby</span><span class="s2">(</span><span class="s4">'Venue'</span><span class="s2">)[</span><span class="s4">'xG'</span><span class="s2">].</span><span class="s1">mean</span><span class="s2">().</span><span class="s1">reset_index</span><span class="s2">()</span>
+
+<span class="s3">#Visualización de la brecha de xG</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">figure</span><span class="s2">(</span><span class="s1">figsize</span><span class="s2">=(</span><span class="s5">6</span><span class="s2">,</span><span class="s5">4</span><span class="s2">))</span>
+<span class="s1">sns</span><span class="s2">.</span><span class="s1">barplot</span><span class="s2">(</span><span class="s1">x</span><span class="s2">=</span><span class="s4">'Venue'</span><span class="s2">, </span><span class="s1">y</span><span class="s2">=</span><span class="s4">'xG'</span><span class="s2">, </span><span class="s1">data</span><span class="s2">=</span><span class="s1">xg_means</span><span class="s2">, </span><span class="s1">palette</span><span class="s2">=[</span><span class="s4">'skyblue'</span><span class="s2">,</span><span class="s4">'salmon'</span><span class="s2">])</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">title</span><span class="s2">(</span><span class="s4">'xG medio: Casa vs Fuera'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">ylabel</span><span class="s2">(</span><span class="s4">'xG medio'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">xlabel</span><span class="s2">(</span><span class="s4">''</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">tight_layout</span><span class="s2">()</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">show</span><span class="s2">()</span>
+
+<span class="s3">#Distribución de xG</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">figure</span><span class="s2">(</span><span class="s1">figsize</span><span class="s2">=(</span><span class="s5">8</span><span class="s2">,</span><span class="s5">5</span><span class="s2">))</span>
+<span class="s1">sns</span><span class="s2">.</span><span class="s1">kdeplot</span><span class="s2">(</span><span class="s1">home_xg</span><span class="s2">, </span><span class="s1">label</span><span class="s2">=</span><span class="s4">'Casa'</span><span class="s2">, </span><span class="s1">shade</span><span class="s2">=</span><span class="s0">True</span><span class="s2">)</span>
+<span class="s1">sns</span><span class="s2">.</span><span class="s1">kdeplot</span><span class="s2">(</span><span class="s1">away_xg</span><span class="s2">, </span><span class="s1">label</span><span class="s2">=</span><span class="s4">'Fuera'</span><span class="s2">, </span><span class="s1">shade</span><span class="s2">=</span><span class="s0">True</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">title</span><span class="s2">(</span><span class="s4">'Distribución de xG por localía'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">xlabel</span><span class="s2">(</span><span class="s4">'xG'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">legend</span><span class="s2">()</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">tight_layout</span><span class="s2">()</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">show</span><span class="s2">()</span>
+</pre>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<html>
+<head>
+<title>VictoriasTopAficionados.py</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #7a7e85;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+VictoriasTopAficionados.py</font>
+</center></td></tr></table>
+<pre><span class="s0">import </span><span class="s1">pandas </span><span class="s0">as </span><span class="s1">pd</span>
+<span class="s0">import </span><span class="s1">statsmodels</span><span class="s2">.</span><span class="s1">formula</span><span class="s2">.</span><span class="s1">api </span><span class="s0">as </span><span class="s1">smf</span>
+<span class="s0">import </span><span class="s1">numpy </span><span class="s0">as </span><span class="s1">np</span>
+<span class="s0">import </span><span class="s1">matplotlib</span><span class="s2">.</span><span class="s1">pyplot </span><span class="s0">as </span><span class="s1">plt</span>
+
+<span class="s3"># Leer CSV</span>
+<span class="s1">df </span><span class="s2">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">read_csv</span><span class="s2">(</span><span class="s4">'C:/EDA/matches.csv'</span><span class="s2">)</span>
+<span class="s3"># Definir lista de columnas</span>
+<span class="s1">cols </span><span class="s2">= [</span><span class="s4">'Date'</span><span class="s2">, </span><span class="s4">'Team'</span><span class="s2">, </span><span class="s4">'Opponent'</span><span class="s2">, </span><span class="s4">'Venue'</span><span class="s2">, </span><span class="s4">'Result'</span><span class="s2">, </span><span class="s4">'GF'</span><span class="s2">, </span><span class="s4">'GA'</span><span class="s2">, </span><span class="s4">'xG'</span><span class="s2">, </span><span class="s4">'xGA'</span><span class="s2">, </span><span class="s4">'Attendance'</span><span class="s2">, </span><span class="s4">'Referee'</span><span class="s2">, </span><span class="s4">'Formation'</span><span class="s2">, </span><span class="s4">'Round'</span><span class="s2">]</span>
+
+<span class="s3"># Crear un nuevo DataFrame filtrado</span>
+<span class="s1">df_sel </span><span class="s2">= </span><span class="s1">df</span><span class="s2">[</span><span class="s1">cols</span><span class="s2">].</span><span class="s1">copy</span><span class="s2">()</span>
+
+<span class="s3"># Crear un nuevo DataFrame filtrado</span>
+<span class="s1">df_home </span><span class="s2">= </span><span class="s1">df_sel</span><span class="s2">[</span><span class="s1">df_sel</span><span class="s2">[</span><span class="s4">'Venue'</span><span class="s2">]==</span><span class="s4">'Home'</span><span class="s2">].</span><span class="s1">copy</span><span class="s2">()</span>
+
+<span class="s3"># Crear indicador de victoria local</span>
+<span class="s1">df_home</span><span class="s2">[</span><span class="s4">'home_win'</span><span class="s2">] = </span><span class="s1">np</span><span class="s2">.</span><span class="s1">where</span><span class="s2">(</span><span class="s1">df_home</span><span class="s2">[</span><span class="s4">'Result'</span><span class="s2">]==</span><span class="s4">'W'</span><span class="s2">, </span><span class="s5">1</span><span class="s2">, </span><span class="s5">0</span><span class="s2">)</span>
+
+<span class="s3"># Definir lista de rivales Top 6 (ajusta nombres exactos según tu df)</span>
+<span class="s1">top6 </span><span class="s2">= [</span>
+    <span class="s4">'Arsenal'</span><span class="s2">, </span><span class="s4">'TottenhamHotspur'</span><span class="s2">, </span><span class="s4">'Chelsea'</span><span class="s2">,</span>
+    <span class="s4">'Liverpool'</span><span class="s2">, </span><span class="s4">'ManchesterCity'</span><span class="s2">, </span><span class="s4">'ManchesterUnited'</span>
+<span class="s2">]</span>
+
+<span class="s3"># Crear indicador de rival Top 6</span>
+<span class="s1">df_home</span><span class="s2">[</span><span class="s4">'top6_opponent'</span><span class="s2">] = </span><span class="s1">np</span><span class="s2">.</span><span class="s1">where</span><span class="s2">(</span>
+    <span class="s1">df_home</span><span class="s2">[</span><span class="s4">'Opponent'</span><span class="s2">].</span><span class="s1">isin</span><span class="s2">(</span><span class="s1">top6</span><span class="s2">), </span><span class="s5">1</span><span class="s2">, </span><span class="s5">0</span>
+<span class="s2">)</span>
+
+<span class="s3"># Modelo con interacción</span>
+<span class="s1">model </span><span class="s2">= </span><span class="s1">smf</span><span class="s2">.</span><span class="s1">logit</span><span class="s2">(</span>
+    <span class="s1">formula</span><span class="s2">=</span><span class="s4">'home_win ~ Attendance + top6_opponent + Attendance:top6_opponent'</span><span class="s2">,</span>
+    <span class="s1">data</span><span class="s2">=</span><span class="s1">df_home</span>
+<span class="s2">).</span><span class="s1">fit</span><span class="s2">(</span><span class="s1">disp</span><span class="s2">=</span><span class="s0">False</span><span class="s2">)</span>
+
+<span class="s3"># Rango de asistencia</span>
+<span class="s1">att_range </span><span class="s2">= </span><span class="s1">np</span><span class="s2">.</span><span class="s1">linspace</span><span class="s2">(</span>
+    <span class="s1">df_home</span><span class="s2">[</span><span class="s4">'Attendance'</span><span class="s2">].</span><span class="s1">min</span><span class="s2">(),</span>
+    <span class="s1">df_home</span><span class="s2">[</span><span class="s4">'Attendance'</span><span class="s2">].</span><span class="s1">max</span><span class="s2">(), </span><span class="s5">100</span>
+<span class="s2">)</span>
+
+<span class="s3"># DataFrame para predicción</span>
+<span class="s1">pred_df </span><span class="s2">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">DataFrame</span><span class="s2">({</span>
+    <span class="s4">'Attendance'</span><span class="s2">: </span><span class="s1">np</span><span class="s2">.</span><span class="s1">concatenate</span><span class="s2">([</span><span class="s1">att_range</span><span class="s2">, </span><span class="s1">att_range</span><span class="s2">]),</span>
+    <span class="s4">'top6_opponent'</span><span class="s2">: [</span><span class="s5">0</span><span class="s2">]*</span><span class="s5">100 </span><span class="s2">+ [</span><span class="s5">1</span><span class="s2">]*</span><span class="s5">100</span>
+<span class="s2">})</span>
+
+<span class="s3"># Predicción de probabilidades</span>
+<span class="s1">pred_df</span><span class="s2">[</span><span class="s4">'pred_prob'</span><span class="s2">] = </span><span class="s1">model</span><span class="s2">.</span><span class="s1">predict</span><span class="s2">(</span><span class="s1">pred_df</span><span class="s2">)</span>
+
+<span class="s3"># Separar para graficar</span>
+<span class="s1">pred_no6 </span><span class="s2">= </span><span class="s1">pred_df</span><span class="s2">[</span><span class="s1">pred_df</span><span class="s2">[</span><span class="s4">'top6_opponent'</span><span class="s2">]==</span><span class="s5">0</span><span class="s2">]</span>
+<span class="s1">pred_6   </span><span class="s2">= </span><span class="s1">pred_df</span><span class="s2">[</span><span class="s1">pred_df</span><span class="s2">[</span><span class="s4">'top6_opponent'</span><span class="s2">]==</span><span class="s5">1</span><span class="s2">]</span>
+
+<span class="s3"># Plot</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">figure</span><span class="s2">(</span><span class="s1">figsize</span><span class="s2">=(</span><span class="s5">8</span><span class="s2">,</span><span class="s5">5</span><span class="s2">))</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">plot</span><span class="s2">(</span>
+    <span class="s1">pred_no6</span><span class="s2">[</span><span class="s4">'Attendance'</span><span class="s2">], </span><span class="s1">pred_no6</span><span class="s2">[</span><span class="s4">'pred_prob'</span><span class="s2">],</span>
+    <span class="s1">label</span><span class="s2">=</span><span class="s4">'Rival no Top 6'</span><span class="s2">, </span><span class="s1">color</span><span class="s2">=</span><span class="s4">'green'</span><span class="s2">, </span><span class="s1">lw</span><span class="s2">=</span><span class="s5">2</span>
+<span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">plot</span><span class="s2">(</span>
+    <span class="s1">pred_6</span><span class="s2">[</span><span class="s4">'Attendance'</span><span class="s2">], </span><span class="s1">pred_6</span><span class="s2">[</span><span class="s4">'pred_prob'</span><span class="s2">],</span>
+    <span class="s1">label</span><span class="s2">=</span><span class="s4">'Rival Top 6'</span><span class="s2">, </span><span class="s1">color</span><span class="s2">=</span><span class="s4">'red'</span><span class="s2">,   </span><span class="s1">lw</span><span class="s2">=</span><span class="s5">2</span>
+<span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">scatter</span><span class="s2">(</span>
+    <span class="s1">df_home</span><span class="s2">[</span><span class="s4">'Attendance'</span><span class="s2">], </span><span class="s1">df_home</span><span class="s2">[</span><span class="s4">'home_win'</span><span class="s2">],</span>
+    <span class="s1">alpha</span><span class="s2">=</span><span class="s5">0.2</span><span class="s2">, </span><span class="s1">s</span><span class="s2">=</span><span class="s5">20</span><span class="s2">, </span><span class="s1">color</span><span class="s2">=</span><span class="s4">'gray'</span>
+<span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">title</span><span class="s2">(</span><span class="s4">'Probabilidad de victoria local vs Asistencia</span><span class="s0">\n</span><span class="s4">(rival Top 6 vs resto)'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">xlabel</span><span class="s2">(</span><span class="s4">'Asistencia'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">ylabel</span><span class="s2">(</span><span class="s4">'Probabilidad de victoria local'</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">legend</span><span class="s2">()</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">ylim</span><span class="s2">(</span><span class="s5">0</span><span class="s2">,</span><span class="s5">1</span><span class="s2">)</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">tight_layout</span><span class="s2">()</span>
+<span class="s1">plt</span><span class="s2">.</span><span class="s1">show</span><span class="s2">()</span>
+
+<span class="s3"># Coeficientes del modelo</span>
+<span class="s1">coef_df </span><span class="s2">= </span><span class="s1">pd</span><span class="s2">.</span><span class="s1">DataFrame</span><span class="s2">({</span>
+    <span class="s4">'coef'</span><span class="s2">: </span><span class="s1">model</span><span class="s2">.</span><span class="s1">params</span><span class="s2">,</span>
+    <span class="s4">'std_err'</span><span class="s2">: </span><span class="s1">model</span><span class="s2">.</span><span class="s1">bse</span><span class="s2">,</span>
+    <span class="s4">'p_value'</span><span class="s2">: </span><span class="s1">model</span><span class="s2">.</span><span class="s1">pvalues</span>
+<span class="s2">})</span>
+<span class="s1">print</span><span class="s2">(</span><span class="s4">&quot;</span><span class="s0">\n</span><span class="s4">Coeficientes y significancia:</span><span class="s0">\n</span><span class="s4">&quot;</span><span class="s2">, </span><span class="s1">coef_df</span><span class="s2">)</span></pre>
+</body>
+</html>
